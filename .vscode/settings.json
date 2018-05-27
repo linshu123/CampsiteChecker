@@ -1,0 +1,18 @@
+{
+    "workbench.iconTheme": "vs-minimal",
+    "git.autofetch": true,
+    "beautify.language": {
+        "js": {
+            "type": ["javascript", "json", "typescript"],
+            "filename": [".jshintrc", ".jsbeautifyrc", "tsx"]
+        },
+        "css": ["css", "scss"],
+        "html": ["htm", "html"],
+    },
+    "[typescript]": {
+        "editor.formatOnSave": true,
+        "editor.formatOnPaste": true,
+        "editor.tabSize": 4,
+    },
+    "window.zoomLevel": 0,
+}
