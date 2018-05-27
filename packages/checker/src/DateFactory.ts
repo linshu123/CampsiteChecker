@@ -2,7 +2,7 @@
 export function GetUpcomingTenWeekendDates(): Array < Date > {
   let upcomingWeekendDate = _getUpcomingWeekendDate();
   let tenUpcomingWeekends = [];
-  for (var i = 0; i < 20; i++) {
+  for (var i = 0; i < 10; i++) {
     tenUpcomingWeekends.push(AddDays(upcomingWeekendDate, i * 7));
   }
   return tenUpcomingWeekends;
