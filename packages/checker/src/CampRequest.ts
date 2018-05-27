@@ -5,7 +5,7 @@ import querystring = require('querystring');
 import {
   ICampsite,
   GetInterestedCampsites
-} from './CampSiteFactory'
+} from './CampsiteFactory'
 
 export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICampsite) {
   var headers = {
