@@ -4,13 +4,47 @@ import fs = require('fs');
 import querystring = require('querystring');
 import {
   ICampsite,
-  GetInterestedCampsites
+  GetInterestedCampsites,
 } from './CampsiteFactory'
 import {
   AddDays
 } from './DateFactory'
+import {
+  FetchSessionID,
+  ISessionIDParam
+} from './SessionIDFetcher';
+import {
+  GetUpcomingTenWeekendDates,
+} from './DateFactory.js';
 
-export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICampsite) {
+export function SendRequest() {
+  FetchSessionID((sessionIDParam: ISessionIDParam) => {
+    _sendBatchRequestWithSessionID(sessionIDParam);
+  });
+}
+
+function _sendBatchRequestWithSessionID(sessionIDParam: ISessionIDParam): void {
+
+  let interestedCampsites = GetInterestedCampsites();
+  let upcomingWeekendDate = GetUpcomingTenWeekendDates();
+
+  // TODO: it seems recreation.gov caches the response with a cookie. 
+  // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
+  // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
+  // for (var i = 0; i < 1; i++) {
+  let cachedDate = upcomingWeekendDate[0];
+  let cachedCampsite = interestedCampsites[4];
+  // Maybe use a timer to spread out traffic (doesn't have any effect for now)
+  // setTimeout(function () {
+  console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
+  _sendRequest(sessionIDParam, cachedDate, 1, cachedCampsite);
+  // }, 5000 * i);
+  // }
+}
+
+function _sendRequest(sessionIDParam: ISessionIDParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
+  let cookie = sessionIDParam.key + '=' + sessionIDParam.value;
+  console.log('Fetching with cookie: ' + cookie);
   var headers = {
     'Connection': 'keep-alive',
     'Pragma': 'no-cache',
@@ -21,12 +55,12 @@ export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICa
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Referer': 'https://www.recreation.gov/camping/lower-pines/r/campgroundDetails.do?contractCode=NRSO&parkId=70928',
-    'Cookie': '_rauv_=B25D239C10298A6CDC5181254D487698.awolvprodweb15_; _ga=GA1.2.2050808312.1520809742; _gid=GA1.2.1288529124.1527410569; JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13; NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0645525d5f4f58455e445a4a4221e5; _4c_=XZFNa%2BMwEIb%2FStHZOPq0JN9KC0sPe9ml5yJLo9rUiYLsxC3B%2Fz2jNA2kuXg%2BHr0zeedElh52pGWKaym1EpRTXZEP%2BJpIeyJ5COVzJC1h2O8cc8oEY7WRRoMUOgLvoo80NqQin0VHMMEbbm0j2FqRgNrf7wNEdxjnO0xQSWXBhh%2FK%2Fe4zqrCflytwazSof4%2BWCqJ%2Bf0VP5JBHlOzneT%2B1m82yLHUGn8HNQ9rV7%2Bm4OeyG%2BB9c9v0%2FmHC5qQ4JF%2FApQPnHtlY1xbzLaZkgY%2Bmpz2kLD43CasRBhILwndUMrPGU0RAM0w0N2jvQHXceuYROkr%2BXMEOEnC9KmE3DXMbc74T1GfK2vMFwXzwRGIzJu7HQeKyK%2FHl8e315xoxTRQ01gvEaL4ih1ZIjUGy%2FOY6mXHzieF6hlbVK4ZAZvTGNpOW3rusZ'
+    'Cookie': cookie,
   };
 
   let departureDate = AddDays(arrivalDate, stayLength);
-  let arrivalDateShortString = getDateShortString(arrivalDate);
-  let departureDateShortString = getDateShortString(departureDate);
+  let arrivalDateShortString = _getDateShortString(arrivalDate);
+  let departureDateShortString = _getDateShortString(departureDate);
 
   let dataParams = {
     "contractCode": "NRSO",
@@ -52,24 +86,24 @@ export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICa
 }
 
 // Convert date into format of 'Sat+Jul+21+2018'
-function getDateShortString(date: Date): string {
+function _getDateShortString(date: Date): string {
   return date.toString().substr(0, 15).replace(/ /g, '+');
 }
 
-function writeReponseToFile(fileName: string, content: string) {
+function _writeReponseToFile(fileName: string, content: string) {
   fs.writeFile(fileName, content, function (err) {});
 }
 
 function callback(error: string, response: any, body: string) {
   if (!error && response.statusCode == 200) {
-    writeReponseToFile("./temp/response.html", body);
-    printAvailableSiteNumberFromHTML(body);
+    _writeReponseToFile("./temp/response.html", body);
+    _printAvailableSiteNumberFromHTML(body);
   } else if (error) {
     console.log(error);
   }
 }
 
-function printAvailableSiteNumberFromHTML(htmlBody: string) {
+function _printAvailableSiteNumberFromHTML(htmlBody: string) {
   let $ = cheerio.load(htmlBody);
   let date = $('#arrivalDate').text();
   let campsiteName = $('#cgroundName').text();
