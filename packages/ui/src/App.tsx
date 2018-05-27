@@ -12,7 +12,7 @@ class App extends React.Component {
           <img src={logo} className="App-logo" alt="logo" />
           <h1 className="App-title">Your Loyal Campsite Checker</h1>
           <p className="App-intro">
-            Def not implemented in React.
+            Definitely not implemented in React.
           </p>
         </header>
         {Hello({name: 'shu'})}

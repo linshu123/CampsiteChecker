@@ -3,12 +3,14 @@
   "version": "1.0.0",
   "description": "Finding a spot to sleep at night is hardddd Orz",
   "scripts": {
+    "watch": "wsrun watch",
     "scheduler": "cd packages/checker && npm run scheduler",
     "start": "cd packages/ui && npm start"
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "lerna": "^2.11.0"
+  "devDependencies": {
+    "lerna": "^2.11.0",
+    "wsrun": "^2.2.0"
   }
 }

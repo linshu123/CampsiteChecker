@@ -5,18 +5,19 @@
   "scripts": {
     "test": "test",
     "flow": "flow",
-    "scheduler": "node build/dist/Scheduler.js",
+    "watch": "node node_modules/.bin/tsc -w -p .",
+    "scheduler": "node build/dist/Scheduler.js"
   },
   "dependencies": {
     "@types/cheerio": "^0.22.7",
     "@types/request": "^2.47.0",
     "cheerio": "^1.0.0-rc.2",
-    "request": "2.85.0",
-    "typescript": "^2.8.3"
+    "request": "2.85.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-flow": "^6.23.0",
-    "flow-bin": "^0.72.0"
+    "flow-bin": "^0.72.0",
+    "typescript": "^2.8.3"
   }
 }

@@ -8,6 +8,7 @@
     "react-scripts-ts": "2.16.0"
   },
   "scripts": {
+    "watch": "npm run start",
     "start": "react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
