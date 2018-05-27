@@ -1,12 +1,23 @@
 # CampsiteChecker
 A simple tool for checking campsite
 
-## Quick Start
+## First Time Setup
 
-Run web UI:
+```
+npm install
+lerna bootstrap // This may take a few minutes
+```
 
-`npm run start`
+## Run the service
+
+Run web UI (go to localhost:3000 on your broswer):
+
+```
+npm run start
+```
 
 Run just the worker:
 
-`npm run scheduler`
+```
+npm run scheduler
+```
