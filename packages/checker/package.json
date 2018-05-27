@@ -1,0 +1,25 @@
+{
+  "name": "checker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "test",
+    "flow": "flow",
+    "scheduler": "node dist/Scheduler.js",
+    "start": "cd ui && npm start"
+  },
+  "dependencies": {
+    "@types/cheerio": "^0.22.7",
+    "@types/request": "^2.47.0",
+    "cheerio": "^1.0.0-rc.2",
+    "flow-bin": "^0.41.0",
+    "flow-remove-types": "^1.2.3",
+    "request": "2.85.0",
+    "typescript": "^2.8.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.72.0"
+  }
+}
