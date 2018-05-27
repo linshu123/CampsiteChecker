@@ -6,6 +6,9 @@ import {
   ICampsite,
   GetInterestedCampsites
 } from './CampsiteFactory'
+import {
+  AddDays
+} from './DateFactory'
 
 export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICampsite) {
   var headers = {
@@ -18,16 +21,14 @@ export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICa
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Referer': 'https://www.recreation.gov/camping/lower-pines/r/campgroundDetails.do?contractCode=NRSO&parkId=70928',
-    'Cookie': '_rauv_=B25D239C10298A6CDC5181254D487698.awolvprodweb15_; _ga=GA1.2.2050808312.1520809742; _gid=GA1.2.1340066757.1526182292; JSESSIONID=F3227C8F5A74800EE3CD9AED3ACD6774.awolvprodweb09; NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f3045525d5f4f58455e445a4a4221e5; _4c_=XZJPa9wwEMW%2FStGhp62tf7YkQyglgZJDW2jpucjSeNfEa5mxNm5Z9rtntE0DW188evPTk%2FzGZ7YdYGadaKTRQmhhLDc79gR%2FVtadGY6xvJ5Zx4TRuvfCNzZaZ6y2BrQyA8h%2BCAMfWrZjv4uPEkq20rlWicuORfL%2Buz%2FC4E9TvsEU11wXbPxH%2Bf%2F7gjfUx%2B0VeGu05H%2BLFoXQsLyiZ3bCiSwPOS9rV9fbtlUIAcHnMc3VPj3XwR%2BXcd7XU9oAP1AJa41XdY%2FpNMcHyH6c1iqmjyHNGX3I9ynC3dfvP769Xzw%2BPcY7w520dOtAjRKTq5qK07rHtK2AJN0fMB3hXduQOtDtGAcVemcEOBu44DFaYVoeTfBgeukDcYniZ1%2BuJcIAiFcnWq1jLsfcfgjpGfBY9lC5lCAVFVMKfio0TXjHPn%2F69fPxgVaSN9xyq4SsaOxUOqMlAWVWb2OiJK%2Fh0m%2FhjOFKiZYOyRSobTUvz%2BVyeQE%3D'
+    'Cookie': '_rauv_=B25D239C10298A6CDC5181254D487698.awolvprodweb15_; _ga=GA1.2.2050808312.1520809742; JSESSIONID=C1ADE4C60BCAB852B8D2DA1F47AE3746.awolvprodweb13; NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f3045525d5f4f58455e445a4a4221e5; _gid=GA1.2.1288529124.1527410569; _gat_GSA_ENOR0=1; _gat=1; _4c_=XZHNqtswEIVfpWhtnNGfJXlXbqF00VXpusjSuDZ1IiM7cS%2FB755RmhtIDcZnZj6dSY6ubBvwxFquhVFcg5JGy4r9wfeFtVeWx1g%2BF9YybpTqPPfaRuuMVdYgwT2Krg899A2r2N%2FiI7kUjXCukXyvWCTvf%2Bcj9v48rS%2BYBAWqYOMH5f%2Bfc9A0z9sDeA4a8n9FS4fQMD%2FQKzvniSyHdZ2X9nDYtq3OGDL6dUyn%2Bne6HII%2Fzsu44g%2F0OQx1TLQ9pIjl77pa10B1l9O2YKbW25DTET81mro9bWGAMnTOcHQ2AIcYLTcNRBM8mk74QFyiGNn3u8zYY853J6rKWlKvP4j6K%2BZjOUNyLoFIElMKfio03VTFvn7%2B9fPbF6oEaLBgJRc1XR9JZ5QgoGT%2BjJsSuYckjAaupKOXlqwUjG0UlGff9xs%3D'
   };
 
-  var departureDate = new Date();
-  departureDate.setDate(arrivalDate.getDate() + stayLength);
+  let departureDate = AddDays(arrivalDate, stayLength);
+  let arrivalDateShortString = getDateShortString(arrivalDate);
+  let departureDateShortString = getDateShortString(departureDate);
 
-  const arrivalDateShortString = getDateShortString(arrivalDate);
-  const departureDateShortString = getDateShortString(departureDate);
-
-  const dataParams = {
+  let dataParams = {
     "contractCode": "NRSO",
     "parkId": campsite.id,
     "siteTypeFilter": "ALL",
@@ -38,9 +39,9 @@ export function SendRequest(arrivalDate: Date, stayLength: number, campsite: ICa
     "departureDate": departureDateShortString,
   };
 
-  const dataString = querystring.stringify(dataParams);
+  let dataString = querystring.stringify(dataParams);
 
-  var options = {
+  let options = {
     url: 'https://www.recreation.gov/campsiteSearch.do',
     method: 'POST',
     headers: headers,

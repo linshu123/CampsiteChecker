@@ -13,8 +13,16 @@ function executeOnRepeat(func: any, interval: number) {
 }(function main() {
   let interestedCampsites = GetInterestedCampsites();
   let upcomingWeekendDate = GetUpcomingTenWeekendDates();
-  console.log('Checking ' + upcomingWeekendDate.toString().substring(0, 15) + '...');
-  for (var i = 0; i < interestedCampsites.length; i++) {
-    SendRequest(upcomingWeekendDate[0], 1, interestedCampsites[i]);
+
+  // TODO: it seems recreation.gov caches the response with a cookie. 
+  // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
+  // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
+  for (var i = 0; i < upcomingWeekendDate.length; i++) {
+    let cachedDate = upcomingWeekendDate[i];
+    let cachedCampsite = interestedCampsites[0];
+    setTimeout(function () {
+      console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
+      SendRequest(cachedDate, 1, cachedCampsite);
+    }, 5000 * i);
   }
 })()
