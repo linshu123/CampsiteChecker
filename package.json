@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Finding a spot to sleep at night is hardddd Orz",
   "scripts": {
-    "scheduler": "cd checker && npm run scheduler",
-    "start": "cd ui && npm start"
+    "scheduler": "cd packages/checker && npm run scheduler",
+    "start": "cd packages/ui && npm start"
   },
   "author": "",
   "license": "ISC",

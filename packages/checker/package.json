@@ -5,15 +5,12 @@
   "scripts": {
     "test": "test",
     "flow": "flow",
-    "scheduler": "node dist/Scheduler.js",
-    "start": "cd ui && npm start"
+    "scheduler": "node build/dist/Scheduler.js",
   },
   "dependencies": {
     "@types/cheerio": "^0.22.7",
     "@types/request": "^2.47.0",
     "cheerio": "^1.0.0-rc.2",
-    "flow-bin": "^0.41.0",
-    "flow-remove-types": "^1.2.3",
     "request": "2.85.0",
     "typescript": "^2.8.3"
   },
