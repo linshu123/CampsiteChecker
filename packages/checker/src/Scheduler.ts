@@ -2,11 +2,14 @@ import {
   SendRequest
 } from './CampRequest';
 
+const kIntervalInSeconds = 20;
+
 function executeOnRepeat() {
+  // Execute once immediately, then every interval time.
   SendRequest();
-  setInterval(function sno() {
+  setInterval(function () {
     SendRequest();
-  }, 20 * 1000);
+  }, kIntervalInSeconds * 1000);
 };
 
 executeOnRepeat();

@@ -14,7 +14,7 @@ export class HeaderParam {
   }
 }
 
-export function FetchSessionID(callBack: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void): void {
+export function FetchSessionID(callback: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void): void {
   let promise = new Promise(function (resolve: any, reject: any) {
     let headers = {
       'Connection': 'keep-alive',
@@ -55,7 +55,7 @@ export function FetchSessionID(callBack: (sessionIDParam: HeaderParam, rauvParam
       if (sessionIDParam && rauvParam) {
         console.log('SessionID fetched: ' + sessionIDParam.toString());
         console.log('Rauv fetched: ' + rauvParam.toString());
-        callBack(sessionIDParam, rauvParam);
+        callback(sessionIDParam, rauvParam);
         return;
       }
     }

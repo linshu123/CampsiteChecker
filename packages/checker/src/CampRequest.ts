@@ -43,7 +43,7 @@ export function SendRequest() {
 
 function _getVerifiedSessionID(
   campsite: ICampsite,
-  callBack: (sessionIDParam: HeaderParam) => void
+  callback: (sessionIDParam: HeaderParam) => void
 ) {
   loadJsonFile(kFileNameForCachedSessionID).then(json => {
     let sessionIDParam = new HeaderParam(json.name, json.value);
@@ -54,8 +54,8 @@ function _getVerifiedSessionID(
       (isValid: boolean, sessionIDParam: HeaderParam) => {
         if (isValid) {
           // If session ID is valid, execute call back.
-          console.log('Cached session ID works. Check availability...');
-          callBack(sessionIDParam);
+          console.log('Cached session ID works. Checking availability...');
+          callback(sessionIDParam);
         } else {
           // Otherwise, fetch & validate a new session ID and execute call back if it's successsfal.
           console.log("Cached session ID doesn't work, fetch and validate a new session ID");
@@ -66,14 +66,14 @@ function _getVerifiedSessionID(
                 campsite,
                 (isValid: boolean, sessionIDParam: HeaderParam) => {
                   // If session ID is valid, save to file and continue with request using that session ID.
+                  console.log("Writing new session ID to cached session ID file.");
+                  writeJsonFile(kFileNameForCachedSessionID, {
+                    name: sessionIDParam.key,
+                    value: sessionIDParam.value
+                  });
                   if (isValid) {
-                    console.log("New session ID works. Writing to cached session ID file.");
-                    writeJsonFile(kFileNameForCachedSessionID, {
-                      name: sessionIDParam.key,
-                      value: sessionIDParam.value
-                    });
-                    console.log("Checking availability...");
-                    callBack(sessionIDParam);
+                    console.log("New session ID works. Checking availability...");
+                    callback(sessionIDParam);
                   } else {
                     console.log("New session ID doesn't work. Terminate.");
                   }
@@ -90,12 +90,12 @@ function _getVerifiedSessionID(
 function _validateSessionID(
   sessionIDParam: HeaderParam,
   rauvParam: HeaderParam,
-  callBack: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void
+  callback: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void
 ) {
   let sessionIDValidator = new SessionIDValidator(sessionIDParam, rauvParam);
   sessionIDValidator.validateSessionID(
     (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
-      callBack(sessionIDParam, rauvParam);
+      callback(sessionIDParam, rauvParam);
     },
     3000
   );

@@ -22,7 +22,7 @@ export class SessionIDValidator {
   }
 
   validateSessionID(
-    callBack: (
+    callback: (
       validatedSessionID: HeaderParam,
       validatedRauv: HeaderParam
     ) => void,
@@ -37,17 +37,17 @@ export class SessionIDValidator {
 
     requestFirstSet1.then((body: any) => {
       requestFirstSet2.then((body: any) => {
-        console.log("First validation request set succeeded!");
+        console.log("First validation step finished.");
         new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
           requestSecondSet1.then((body: any) => {
             requestSecondSet2.then((body: any) => {
-              console.log("Second validation request set succeeded!");
+              console.log("Second validation step finished.");
               new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
                 requestThirdSet1.then((body: any) => {
-                  console.log("Final validation request succeeded!");
+                  console.log("Final validation step finished.");
                   console.log("Validated sessionID: " + this.sessionID.toString());
                   console.log("Validated rauv: " + this.rauv.toString());
-                  callBack(this.sessionID, this.rauv);
+                  callback(this.sessionID, this.rauv);
                 });
               });
             });

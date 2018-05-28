@@ -25,7 +25,7 @@ import {
 export function SessionIDIsValid(
   sessionIDParam: HeaderParam,
   campsite: ICampsite,
-  callBack: (isValid: boolean, sessionIDParam: HeaderParam) => void
+  callback: (isValid: boolean, sessionIDParam: HeaderParam) => void
 ) {
   let upcomingWeekendDate = GetUpcomingWeekendDate();
   let batchRequestVerifier = new BatchRequestVerifier(
@@ -40,7 +40,7 @@ export function SessionIDIsValid(
     3, // Number of attempts
     IsAvailabilityResponseValid,
     (didSucceed: boolean, body: string) => {
-      callBack(didSucceed, sessionIDParam);
+      callback(didSucceed, sessionIDParam);
     }
   );
 

@@ -8,13 +8,13 @@ export class BatchRequestVerifier {
   private hasExecutedCallback: boolean;
 
   constructor(
-    // a function that returns the request promise
+    // A function that returns the request promise
     private requestPromiseBuilder: () => Promise < any > ,
-    // the number of times to send the request
+    // The number of times to send the request
     private numberOfTimesToTry: number,
-    // function that takes the body of the response, and check if it's valid
+    // Function that takes the body of the response, and check if it's valid
     private verifier: (body: any) => boolean,
-    // callback function that is executed whenever one response is valid, or when the last attempt has failed.
+    // Callback function that is executed whenever one response is valid, or when the last attempt has failed.
     private callback: (didSucceed: boolean, body: any) => void
   ) {
     this.numberOfFailedAttempt = 0;
@@ -34,7 +34,6 @@ export class BatchRequestVerifier {
         } else {
           this.numberOfFailedAttempt += 1;
           if (this.numberOfFailedAttempt === this.numberOfTimesToTry) {
-            console.log('Reached max # of failure, returning.');
             this.callback(false, body);
             this.hasExecutedCallback = true;
           }
