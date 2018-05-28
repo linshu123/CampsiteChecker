@@ -6,11 +6,21 @@ import {
   BuildRequestPromise
 } from "./RequestFactory";
 
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    var r = Math.random() * 16 | 0,
+      v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 export class SessionIDValidator {
 
+  private randomNonce: string;
   constructor(
     private sessionID: HeaderParam, private rauv: HeaderParam
-  ) {}
+  ) {
+    this.randomNonce = uuidv4();
+  }
   validateSessionID(
     callBack: (
       validatedSessionID: HeaderParam,
@@ -19,31 +29,26 @@ export class SessionIDValidator {
     waitTimeBetweenRequests: number,
   ) {
 
-    let request1 = this._getRequestPromiseForParkSearchFirstRequest();
-    let request2 = this._getRequestPromiseForParkSearchSecondRequest();
-    let request3 = this._getRequestPromiseForCampgroundSearchFirstRequest();
-    let request4 = this._getRequestPromiseForCampgroundSearchSecondRequest();
-    let request5 = this._getRequestPromiseForDateSearchRequest();
+    // No delay is required between the same set.
+    let requestFirstSet1 = this._getRequestPromiseForParkSearchFirstRequest();
+    let requestFirstSet2 = this._getRequestPromiseForParkSearchSecondRequest();
+    let requestSecondSet1 = this._getRequestPromiseForCampgroundSearchFirstRequest();
+    let requestSecondSet2 = this._getRequestPromiseForCampgroundSearchSecondRequest();
+    let requestThirdSet1 = this._getRequestPromiseForDateSearchRequest();
 
-    request1.then((body: any) => {
-      console.log("request1 succeeded!");
-      new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
-        request2.then((body: any) => {
-          console.log("request2 succeeded!");
-          new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
-            request3.then((body: any) => {
-              console.log("request3 succeeded!");
+    requestFirstSet1.then((body: any) => {
+      requestFirstSet2.then((body: any) => {
+        console.log("First validation request set succeeded!");
+        new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+          requestSecondSet1.then((body: any) => {
+            requestSecondSet2.then((body: any) => {
+              console.log("Second validation request set succeeded!");
               new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
-                request4.then((body: any) => {
-                  console.log("request4 succeeded!");
-                  new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
-                    request5.then((body: any) => {
-                      console.log("request5 succeeded! Validation completed!");
-                      console.log("Validated sessionID: " + this.sessionID.toString());
-                      console.log("Validated rauv: " + this.rauv.toString());
-                      callBack(this.sessionID, this.rauv);
-                    });
-                  });
+                requestThirdSet1.then((body: any) => {
+                  console.log("Final validation request succeeded!");
+                  console.log("Validated sessionID: " + this.sessionID.toString());
+                  console.log("Validated rauv: " + this.rauv.toString());
+                  callBack(this.sessionID, this.rauv);
                 });
               });
             });
@@ -71,7 +76,7 @@ export class SessionIDValidator {
       Referer: "https://www.recreation.gov/",
       "Accept-Encoding": "gzip, deflate, br",
       "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6",
-      Cookie: this._getSessionIDAndRauvStringForCookie() + "NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _gat_GSA_ENOR0=1; _gat=1; _4c_=fVFNb7MwDP4rk8%2BIxvlwArdpk6Yddtz5FYSwVmsbFFjZVPW%2F16FdpbeHIRE55vHzYY4wr8MeajTSapLaSJKigM%2FwM0J9BD%2Fk85CPr7SFGtbTNIz1ajXPc5mCT6GZNnFffsTDCgrwsQsMwqo0peB7m%2BI8hsStp3WKu%2FBAxN2eSaG3ou1cZUkb07vGVyp46ijIhq1I5RgX2QK8NZ7LFPqQ0sLEt3EzZZn%2F9bk%2FhbTLM1wO7BmQi230zTajOWUBL4%2F%2F3l%2BfF4sWJQp%2By9%2FowsKpgO%2FLLox2DoUVmlknDu5Ii%2FwwIm2661IAnSePHaK12iiDrQpk214p2Va97itWXPiU4URaOKoywcB8yzze5LQllz%2FTVQ71TS4nuUNnc8JZwT%2Fq3txl43%2FMyPuZ0%2BkM"
+      Cookie: this._getSessionIDAndRauvStringForCookie() + "NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _gat_GSA_ENOR0=1; _gat=1; _4c_=fVFNb7MwDP4rk8%2BIxvlwArdpk6Yddtz5FYSwVmsbFFjZVPW%2F16FdpbeHIRE55vHzYY4wr8MeajTSapLaSJKigM%2FwM0J9BD%2Fk85CPr7SFGtbTNIz1ajXPc5mCT6GZNnFffsTDCgrwsQsMwqo0peB7m%2BI8hsStp3WKu%2FBAxN2eSaG3ou1cZUkb07vGVyp46ijIhq1I5RgX2QK8NZ7LFPqQ0sLEt3EzZZn%2F9bk%2FhbTLM1wO7BmQi230zTajOWUBL4%2F%2F3l%2BfF4sWJQp%2By9%2FowsKpgO%2FLLox2DoUVmlknDu5Ii%2FwwIm2661IAnSePHaK12iiDrQpk214p2Va97itWXPiU4URaOKoywcB8yzze5LQllz%2FTVQ71TS4nuUNnc8JZwT%2Fq3txl43%2FMyPuZ0%2BkM" + this.randomNonce.toString(),
     };
 
     let dataString =
@@ -97,8 +102,11 @@ export class SessionIDValidator {
       "Accept-Encoding": "gzip, deflate, br",
       "Accept-Language": "en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6",
       Cookie: this._getSessionIDAndRauvStringForCookie() +
-        "NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _gat_GSA_ENOR0=1; _gat=1; _4c_=fVFNb7MwDP4rk8%2BIxvlwArdpk6Yddtz5FYSwVmsbFFjZVPW%2F16FdpbeHIRE55vHzYY4wr8MeajTSapLaSJKigM%2FwM0J9BD%2Fk85CPr7SFGtbTNIz1ajXPc5mCT6GZNnFffsTDCgrwsQsMwqo0peB7m%2BI8hsStp3WKu%2FBAxN2eSaG3ou1cZUkb07vGVyp46ijIhq1I5RgX2QK8NZ7LFPqQ0sLEt3EzZZn%2F9bk%2FhbTLM1wO7BmQi230zTajOWUBL4%2F%2F3l%2BfF4sWJQp%2By9%2FowsKpgO%2FLLox2DoUVmlknDu5Ii%2FwwIm2661IAnSePHaK12iiDrQpk214p2Va97itWXPiU4URaOKoywcB8yzze5LQllz%2FTVQ71TS4nuUNnc8JZwT%2Fq3txl43%2FMyPuZ0%2BkM"
+        "NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _gat_GSA_ENOR0=1; _gat=1; _4c_=fVFNb7MwDP4rk8%2BIxvlwArdpk6Yddtz5FYSwVmsbFFjZVPW%2F16FdpbeHIRE55vHzYY4wr8MeajTSapLaSJKigM%2FwM0J9BD%2Fk85CPr7SFGtbTNIz1ajXPc5mCT6GZNnFffsTDCgrwsQsMwqo0peB7m%2BI8hsStp3WKu%2FBAxN2eSaG3ou1cZUkb07vGVyp46ijIhq1I5RgX2QK8NZ7LFPqQ0sLEt3EzZZn%2F9bk%2FhbTLM1wO7BmQi230zTajOWUBL4%2F%2F3l%2BfF4sWJQp%2By9%2FowsKpgO%2FLLox2DoUVmlknDu5Ii%2FwwIm2661IAnSePHaK12iiDrQpk214p2Va97itWXPiU4URaOKoywcB8yzze5LQllz%2FTVQ71TS4nuUNnc8JZwT%2Fq3txl43%2FMyPuZ0%2BkM" + this.randomNonce.toString(),
     };
+
+    // Refresh nonce after request set
+    this.randomNonce = uuidv4();
 
     return BuildRequestPromise({
       url: "https://www.recreation.gov/unifSearchResults.do",
@@ -118,7 +126,7 @@ export class SessionIDValidator {
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6',
       'Cookie': this._getSessionIDAndRauvStringForCookie() +
-        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVFLb6MwEP4rqzkjgl8PuFWtVPWwl656XoEZF1QSI0PCVlH%2Be8YkjbatVCSs8fDN9xiOsHS4g4opbqTmqtRW8Aze8H2C6ghuTOchHfs4QAXdPI9Ttdksy5JHdBHruQ%2B7%2FDUcNvtd7%2F9gHV33jNN%2BmKe8DZCBCy3SICtzlRd0b2JYJozUuu9i2OIvranrSQi8KZrWlkZLpbytXSnQ6VYjr8keF5ZwgWzB79pRGdFjjCsT3aZ%2BTjKfPVF%2FxrhNM1SOlAM4FUNw9ZDQlDyDx7u%2FL08Pq0XDOCvoza%2FrkIWBUwb%2FLvtR0lpljDTEOtMyrJZFeggR%2B%2Fa6KGDWacdaxgiphGKNQG0aLwRvSi99SYorn1CUSBZWl4lgJL51nt3kpNE2fdZXOSZvcinJiqZf9cXcB%2Fo%2Fc5eN%2FzDzLdDpdAY%3D'
+        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVFLb6MwEP4rqzkjgl8PuFWtVPWwl656XoEZF1QSI0PCVlH%2Be8YkjbatVCSs8fDN9xiOsHS4g4opbqTmqtRW8Aze8H2C6ghuTOchHfs4QAXdPI9Ttdksy5JHdBHruQ%2B7%2FDUcNvtd7%2F9gHV33jNN%2BmKe8DZCBCy3SICtzlRd0b2JYJozUuu9i2OIvranrSQi8KZrWlkZLpbytXSnQ6VYjr8keF5ZwgWzB79pRGdFjjCsT3aZ%2BTjKfPVF%2FxrhNM1SOlAM4FUNw9ZDQlDyDx7u%2FL08Pq0XDOCvoza%2FrkIWBUwb%2FLvtR0lpljDTEOtMyrJZFeggR%2B%2Fa6KGDWacdaxgiphGKNQG0aLwRvSi99SYorn1CUSBZWl4lgJL51nt3kpNE2fdZXOSZvcinJiqZf9cXcB%2Fo%2Fc5eN%2FzDzLdDpdAY%3D' + +this.randomNonce.toString()
     };
 
     return BuildRequestPromise({
@@ -139,8 +147,11 @@ export class SessionIDValidator {
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6',
       'Cookie': this._getSessionIDAndRauvStringForCookie() +
-        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVFLb6MwEP4rqzkjgl8PuFWtVPWwl656XoEZF1QSI0PCVlH%2Be8YkjbatVCSs8fDN9xiOsHS4g4opbqTmqtRW8Aze8H2C6ghuTOchHfs4QAXdPI9Ttdksy5JHdBHruQ%2B7%2FDUcNvtd7%2F9gHV33jNN%2BmKe8DZCBCy3SICtzlRd0b2JYJozUuu9i2OIvranrSQi8KZrWlkZLpbytXSnQ6VYjr8keF5ZwgWzB79pRGdFjjCsT3aZ%2BTjKfPVF%2FxrhNM1SOlAM4FUNw9ZDQlDyDx7u%2FL08Pq0XDOCvoza%2FrkIWBUwb%2FLvtR0lpljDTEOtMyrJZFeggR%2B%2Fa6KGDWacdaxgiphGKNQG0aLwRvSi99SYorn1CUSBZWl4lgJL51nt3kpNE2fdZXOSZvcinJiqZf9cXcB%2Fo%2Fc5eN%2FzDzLdDpdAY%3D'
+        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVFLb6MwEP4rqzkjgl8PuFWtVPWwl656XoEZF1QSI0PCVlH%2Be8YkjbatVCSs8fDN9xiOsHS4g4opbqTmqtRW8Aze8H2C6ghuTOchHfs4QAXdPI9Ttdksy5JHdBHruQ%2B7%2FDUcNvtd7%2F9gHV33jNN%2BmKe8DZCBCy3SICtzlRd0b2JYJozUuu9i2OIvranrSQi8KZrWlkZLpbytXSnQ6VYjr8keF5ZwgWzB79pRGdFjjCsT3aZ%2BTjKfPVF%2FxrhNM1SOlAM4FUNw9ZDQlDyDx7u%2FL08Pq0XDOCvoza%2FrkIWBUwb%2FLvtR0lpljDTEOtMyrJZFeggR%2B%2Fa6KGDWacdaxgiphGKNQG0aLwRvSi99SYorn1CUSBZWl4lgJL51nt3kpNE2fdZXOSZvcinJiqZf9cXcB%2Fo%2Fc5eN%2FzDzLdDpdAY%3D' + this.randomNonce.toString()
     };
+
+    // Refresh nonce after request set
+    this.randomNonce = uuidv4();
 
     return BuildRequestPromise({
       url: 'https://www.recreation.gov/camping/north-pines/r/campgroundDetails.do?contractCode=NRSO&parkId=70927',
@@ -162,7 +173,7 @@ export class SessionIDValidator {
       'Accept-Encoding': 'gzip, deflate, br',
       'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6',
       'Cookie': this._getSessionIDAndRauvStringForCookie() +
-        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVBda9wwEPwrZR%2F6dLUl68syhFISKHloCy19LrIk35ncWWatxC3h%2FntWzjX0A2KwWK1mZ3bmEdZDnKDjqjFSN4ZzadkO7uKvBbpH8HM5H8pxj0fo4JDzvHR1va5rhdFjdHlMU7VPD7V3p3mc9vWUMB%2FeURmXGrfuHtP9FG5iduNxqUJ679OU0fl8nUK8%2Bvz125e3s8O723BlmG0M7MDTA6lxW6mK0b3HtC4RqXV9wHSKb7Sm7kDbwWBYH1prtFRqaJ23InoddGwceWpES7hEXuCT81RiHCLixkS3ZcxF5m8j1M8RT2WGypnMg6DimLw7FjTFtYOPH358v73ZVjS84Yz%2B6pKhZAbOO%2Fj5HKqiPBk31hBrpgRbLVn5CIFjuKQLvPXa88C5MVIJxXsRtekHIZreDnKwpLjxCUWOJGu1LQQz8W3z%2FEVOGt2WZ32R4%2FJFrjjZ0OK%2F5X6j%2F1juOfFXZuy%2FM%2BfzEw%3D%3D'
+        'NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0745525d5f4f58455e445a4a4221e5; _ga=GA1.2.1971210121.1527462407; _gid=GA1.2.422169860.1527462407; _4c_=fVBda9wwEPwrZR%2F6dLUl68syhFISKHloCy19LrIk35ncWWatxC3h%2FntWzjX0A2KwWK1mZ3bmEdZDnKDjqjFSN4ZzadkO7uKvBbpH8HM5H8pxj0fo4JDzvHR1va5rhdFjdHlMU7VPD7V3p3mc9vWUMB%2FeURmXGrfuHtP9FG5iduNxqUJ679OU0fl8nUK8%2Bvz125e3s8O723BlmG0M7MDTA6lxW6mK0b3HtC4RqXV9wHSKb7Sm7kDbwWBYH1prtFRqaJ23InoddGwceWpES7hEXuCT81RiHCLixkS3ZcxF5m8j1M8RT2WGypnMg6DimLw7FjTFtYOPH358v73ZVjS84Yz%2B6pKhZAbOO%2Fj5HKqiPBk31hBrpgRbLVn5CIFjuKQLvPXa88C5MVIJxXsRtekHIZreDnKwpLjxCUWOJGu1LQQz8W3z%2FEVOGt2WZ32R4%2FJFrjjZ0OK%2F5X6j%2F1juOfFXZuy%2FM%2BfzEw%3D%3D' + this.randomNonce.toString()
     };
 
     let dataString = 'contractCode=NRSO&parkId=70927&siteTypeFilter=ALL&availStatus=&submitSiteForm=true&search=site&currentMaximumWindow=12&arrivalDate=Wed+May+30+2018&departureDate=Thu+May+31+2018&flexDates=&loop=&siteCode=&lookingFor=&camping_common_218=&camping_common_3012=&camping_common_3013=';

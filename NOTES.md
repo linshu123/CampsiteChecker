@@ -1,34 +1,43 @@
 # Cookie Behavior
 
-## Observation
+## Validation
+
+Each "session" contains a few sets of request:
+
+- (1) Initial request to go to recreation.gov main page.
+- (2) Second set of requests when you search a park, say, "Yosemite National Park"
+  - (2.1) A post request
+  - (2.2) A get request
+- (3) Third set of requests when you click on a campground, say, "Lower Pines"
+  - (3.1) A post request
+  - (3.2) A get request
+- (4) Request when you search for a date for the campground, say, "Sun 10 Jun 2018 to Mon 11 Jun 2018".
+
+Request (4) is the one we actually care about. But it requires a valid cookie to return real availability, otherwise it only returns the number of campsites they have, not how many are available.
+
+If you look at the cookie field of request (4) header, there is a bunch of stuff, but only `JSESSIONID` ( `JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13`) is important. If you have an "activated" `JSESSIONID`, you can strip off all the other crap in cookie field and still get campsite availability.
+
+However, to get an "activated" `JSESSIONID` is slightly more complicated than trivial. From my experiment, we need to perform these few steps (these are performed in SessionIDValidator.ts):
+
+1. Request (1) will return two things: `JSESSIONID`, `_rauv_`. Their value is the same except `_rauv_`'s value has a trailing underscore `_`.
+2. Stick the value of `JSESSIONID`, `_rauv_` into request (2.1), (2.2), (3.1), (3.2) in their "cookie" header. 
+3. Provide a random nonce (random string) for a key `_4c_` for each set of requests in their "cookie" header. (2.1) and (2.2) will share the same `_4c_` value, and (3.1), (3.2) will share the same `_4c_`. 
+4. Send those requests in this order: (1), (2.1) & (2.2) the same time, (3.1) & (3.2) the same time, (4). The same set of requests can go together because on recreation.gov, they are sent on the same page reload. I also inserted a few seconds of delay between each sets. I think that helps with throttling.
+
+After those steps, `JSESSIONID` will be validated. Now we can use this `JSESSIONID` to just perform (4) on any campsite and any date.
+
+## Caveats
+
+There are a few cases where we performed the validation but still can't get the availability response.
+
+1. Even with a perfectly validated `JSESSIONID`, recreation.gov may not give you availability for no reason. Try a few more times, it may succeed on the second or third time. `BatchRequestVerifier` is written specifically for this reason.
+2. If you repeatedly query the same campsite with new validated `JSESSIONID` (as I often do in my testing), the campsite page may only return invalid response. I think probably some kind of throttling on how often new `JSESSIONID` can be validated.
+3. As of this writing, when I test, with frequent new `JSESSIONID` validation and change of campsite ID, I can get valid reponses about 40% of the time. I believe caching proven good `JSESSIONID` will increase this rate.
+
+# Random Bits
 
 In header of response of all page requests (including the initial recreation.gov page), there is a set-cookie field, which looks like 
 ```
 NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0645525d5f4f58455e445a4a4221e5;expires=Sun, 27-May-2018 20:03:05 GMT;path=/;secure;httponly
 ```
 `NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0645525d5f4f58455e445a4a4221e5` is persisted across different sessions, regardless of cookie expiration. It's probably an ID provided by the browser. 
-
-In the header of request, there is a cookie field, which looks like
-```
-_rauv_=B25D239C10298A6CDC5181254D487698.awolvprodweb15_; _ga=GA1.2.2050808312.1520809742; _gid=GA1.2.1288529124.1527410569; JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13; NSC_MWQSPE-VXQSFD-IUUQT=ffffffff09d44f0645525d5f4f58455e445a4a4221e5; _4c_=XZFNa%2BMwEIb%2FStHZOPq0JN9KC0sPe9ml5yJLo9rUiYLsxC3B%2Fz2jNA2kuXg%2BHr0zeedElh52pGWKaym1EpRTXZEP%2BJpIeyJ5COVzJC1h2O8cc8oEY7WRRoMUOgLvoo80NqQin0VHMMEbbm0j2FqRgNrf7wNEdxjnO0xQSWXBhh%2FK%2Fe4zqrCflytwazSof4%2BWCqJ%2Bf0VP5JBHlOzneT%2B1m82yLHUGn8HNQ9rV7%2Bm4OeyG%2BB9c9v0%2FmHC5qQ4JF%2FApQPnHtlY1xbzLaZkgY%2Bmpz2kLD43CasRBhILwndUMrPGU0RAM0w0N2jvQHXceuYROkr%2BXMEOEnC9KmE3DXMbc74T1GfK2vMFwXzwRGIzJu7HQeKyK%2FHl8e315xoxTRQ01gvEaL4ih1ZIjUGy%2FOY6mXHzieF6hlbVK4ZAZvTGNpOW3rusZ
-```
-Only the `JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13` part is important. You can strip the entire field down to just this value and it's still valid. It's refreshed everytime you go to the site.
-
-It seems this field is not changed across all requests to recreation.gov, including the initial main page.
-
-This `JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13` is not valid (meaning it can't retrive reservation data) until you manually set the arrival date and departure date on the site. 
-
-## Guesses
-
-The response header `set-cookie` seems to set an expiration date for the cookie, but it doesn't make the cookie valid. 
-
-`JSESSIONID=774CFD555191A358894FBA5DE616A713.awolvprodweb13` is probably returned by a response.
-
-Manually picking the arrival/departure date probably sends a response to activate the `JSESSIONID`. 
-
-# Caching/Throttling Behavior
-Observed behavior:
-1. Queries on same campsite, for 10 different dates, returns the same availability.
-2. Queries on 10 different campsites, for the same date, returns only availability for one site. 
-3. If I manually change the campsites and send a new query, it's always valid. It takes me 10 ~ 20 seconds to change the code.
-4. A valid cookie returns availability most of the time, but not always. Usually I had to send the query 2 or 3 times to ensure good response. 

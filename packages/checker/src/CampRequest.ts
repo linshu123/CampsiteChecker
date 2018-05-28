@@ -38,21 +38,13 @@ function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam, rauvParam: 
     (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
       let interestedCampsites = GetInterestedCampsites();
       let upcomingWeekendDate = GetUpcomingTenWeekendDates();
-      // TODO: it seems recreation.gov caches the response with a cookie. 
-      // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
-      // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
       for (var i = 0; i < 1; i++) {
         let cachedDate = upcomingWeekendDate[0];
-        let cachedCampsite = interestedCampsites[0];
-        // Maybe use a timer to spread out traffic (doesn't have any effect for now)
-        // setTimeout(function () { [code] }, 5000 * i);
-        console.log('Wait for a few seconds...');
-        setTimeout(function () {
-          console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
-          _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, cachedCampsite);
-        }, 30 * i);
+        let cachedCampsite = interestedCampsites[2];
+        console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
+        _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, cachedCampsite);
       }
-    }, 0);
+    }, 3000);
 }
 
 function _getAvailabilityOfCampsite(sessionIDParam: HeaderParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
@@ -60,7 +52,7 @@ function _getAvailabilityOfCampsite(sessionIDParam: HeaderParam, arrivalDate: Da
     () => {
       return _getAvailabilityRequestPromise(sessionIDParam, arrivalDate, stayLength, campsite);
     },
-    5,
+    3, // Number of attempts
     _isAvailabilityResponseValid,
     (didSucceed: boolean, body: string) => {
       _printAvailableSiteNumberFromHTML(body);

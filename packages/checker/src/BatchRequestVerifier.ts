@@ -5,6 +5,7 @@
 export class BatchRequestVerifier {
 
   private numberOfFailedAttempt: number;
+  private hasExecutedCallback: boolean;
 
   constructor(
     // a function that returns the request promise
@@ -17,20 +18,25 @@ export class BatchRequestVerifier {
     private callback: (didSucceed: boolean, body: any) => void
   ) {
     this.numberOfFailedAttempt = 0;
+    this.hasExecutedCallback = false;
   }
 
   startBatchRequest() {
     for (let i = 0; i < this.numberOfTimesToTry; i++) {
       let promise = this.requestPromiseBuilder();
       promise.then((body: any) => {
-        if (this.verifier(body)) {
+        if (this.hasExecutedCallback) {
+          return;
+        } else if (this.verifier(body)) {
           this.callback(true, body);
+          this.hasExecutedCallback = true;
           return;
         } else {
           this.numberOfFailedAttempt += 1;
           if (this.numberOfFailedAttempt === this.numberOfTimesToTry) {
             console.log('Reached max # of failure, returning.');
             this.callback(false, body);
+            this.hasExecutedCallback = true;
           }
         }
       });
