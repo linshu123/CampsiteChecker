@@ -25,6 +25,7 @@ import {
 */
 export function SessionIDIsValid(
   sessionIDParam: HeaderParam,
+  campsite: ICampsite,
   callBack: (isValid: boolean, sessionIDParam: HeaderParam) => void
 ) {
   let upcomingWeekendDate = GetUpcomingWeekendDate();
@@ -35,7 +36,7 @@ export function SessionIDIsValid(
         sessionIDParam,
         upcomingWeekendDate,
         1,
-        interestedCampsites,
+        campsite,
       );
     },
     3, // Number of attempts

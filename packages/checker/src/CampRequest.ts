@@ -33,12 +33,14 @@ import {
 const kFileNameForCachedSessionID = "./cache/valid_session_id.json";
 
 export function SendRequest() {
-  _getVerifiedSessionID((sessionIDParam: HeaderParam) => {
-    _sendBatchRequestWithSessionID(sessionIDParam);
+  let interestedCampsite = GetInterestedCampsites()[4];
+  _getVerifiedSessionID(interestedCampsite, (sessionIDParam: HeaderParam) => {
+    _sendBatchRequestWithSessionID(sessionIDParam, interestedCampsite);
   });
 }
 
 function _getVerifiedSessionID(
+  campsite: ICampsite,
   callBack: (sessionIDParam: HeaderParam) => void
 ) {
   console.log('Loading cached session ID...')
@@ -46,6 +48,7 @@ function _getVerifiedSessionID(
     let sessionIDParam = new HeaderParam(json.name, json.value);
     SessionIDIsValid(
       sessionIDParam,
+      campsite,
       (isValid: boolean, sessionIDParam: HeaderParam) => {
         if (isValid) {
           // If session ID is valid, execute call back.
@@ -57,6 +60,7 @@ function _getVerifiedSessionID(
             _validateSessionID(sessionIDParam, rauvParam, (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
               SessionIDIsValid(
                 sessionIDParam,
+                campsite,
                 (isValid: boolean, sessionIDParam: HeaderParam) => {
                   // If session ID is valid, save to file and continue with request using that session ID.
                   if (isValid) {
@@ -93,14 +97,12 @@ function _validateSessionID(
   );
 }
 
-function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam): void {
-  let interestedCampsites = GetInterestedCampsites();
+function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam, campsite: ICampsite): void {
   let upcomingWeekendDate = GetUpcomingTenWeekendDates();
   for (var i = 0; i < 1; i++) {
     let cachedDate = upcomingWeekendDate[0];
-    let cachedCampsite = interestedCampsites[1];
     console.log("Checking " + cachedDate.toString().substring(0, 15) + "...");
-    _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, cachedCampsite);
+    _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, campsite);
   }
 }
 

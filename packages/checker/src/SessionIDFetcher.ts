@@ -45,7 +45,7 @@ export function FetchSessionID(callBack: (sessionIDParam: HeaderParam, rauvParam
     let cookies = setCookie.parse(response);
     let sessionIDParam = undefined;
     let rauvParam = undefined;
-    // Multiple cookies will be returned. Look for the cookie that has the name `JSESSIONID`
+    // Multiple cookies will be returned. Look for the cookie that has the name `JSESSIONID` and `_rauv_`
     for (let index = 0; index < cookies.length; index++) {
       if (cookies[index].name === kCookieNameForSessionID) {
         sessionIDParam = new HeaderParam(cookies[index].name, cookies[index].value);

@@ -16,11 +16,11 @@ function uuidv4() {
 export class SessionIDValidator {
 
   private randomNonce: string;
-  constructor(
-    private sessionID: HeaderParam, private rauv: HeaderParam
-  ) {
+
+  constructor(private sessionID: HeaderParam, private rauv: HeaderParam) {
     this.randomNonce = uuidv4();
   }
+
   validateSessionID(
     callBack: (
       validatedSessionID: HeaderParam,
@@ -28,7 +28,6 @@ export class SessionIDValidator {
     ) => void,
     waitTimeBetweenRequests: number,
   ) {
-
     // No delay is required between the same set.
     let requestFirstSet1 = this._getRequestPromiseForParkSearchFirstRequest();
     let requestFirstSet2 = this._getRequestPromiseForParkSearchSecondRequest();
@@ -43,14 +42,14 @@ export class SessionIDValidator {
           requestSecondSet1.then((body: any) => {
             requestSecondSet2.then((body: any) => {
               console.log("Second validation request set succeeded!");
-              // new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
-              //   requestThirdSet1.then((body: any) => {
-              // console.log("Final validation request succeeded!");
-              console.log("Validated sessionID: " + this.sessionID.toString());
-              console.log("Validated rauv: " + this.rauv.toString());
-              callBack(this.sessionID, this.rauv);
-              // });
-              // });
+              new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+                requestThirdSet1.then((body: any) => {
+                  console.log("Final validation request succeeded!");
+                  console.log("Validated sessionID: " + this.sessionID.toString());
+                  console.log("Validated rauv: " + this.rauv.toString());
+                  callBack(this.sessionID, this.rauv);
+                });
+              });
             });
           });
         });

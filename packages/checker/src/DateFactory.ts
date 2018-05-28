@@ -12,8 +12,7 @@ export function GetUpcomingWeekendDate(): Date {
   let now = new Date();
   let day = now.getDay();
   let isWeekendNow = 6 > day;
-  let upcomingWeekendDate = AddDays(now, (isWeekendNow ? 6 : 13) - day - 3);
-  console.log('upcomingWeekendDate: ' + upcomingWeekendDate);
+  let upcomingWeekendDate = AddDays(now, (isWeekendNow ? 6 : 13) - day);
   return upcomingWeekendDate;
 }
 
