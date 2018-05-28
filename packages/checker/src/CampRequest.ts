@@ -36,25 +36,30 @@ export function SendRequest() {
   let timeStamp = new Date().toLocaleTimeString();
   console.log("******* Start job ******* " + timeStamp);
   let interestedCampsite = GetInterestedCampsites()[5];
-  _getVerifiedSessionID(interestedCampsite, (sessionIDParam: HeaderParam) => {
-    _sendBatchRequestWithSessionID(sessionIDParam, interestedCampsite);
+  _getVerifiedSessionIDForCampsite(interestedCampsite, (sessionIDParam: HeaderParam) => {
+    _requestAvailabilityForUpcomingWeekendDates(sessionIDParam, interestedCampsite);
   });
 }
 
-function _getVerifiedSessionID(
+/*
+  Since a session ID only works consistently for one campsite, we can only get it for a specific campsite.
+  This function first checks if the existing cached session ID works, if not, request a new one
+  Only after the session ID is verified, we execute callback.
+*/
+function _getVerifiedSessionIDForCampsite(
   campsite: ICampsite,
   callback: (sessionIDParam: HeaderParam) => void
 ) {
   loadJsonFile(kFileNameForCachedSessionID).then(json => {
     let sessionIDParam = new HeaderParam(json.name, json.value);
-    console.log('Loaded session ID: ' + sessionIDParam.toString());
+    console.log('Loaded session ID for ' + campsite.name + ': ' + sessionIDParam.toString());
     SessionIDIsValid(
       sessionIDParam,
       campsite,
       (isValid: boolean, sessionIDParam: HeaderParam) => {
         if (isValid) {
           // If session ID is valid, execute call back.
-          console.log('Cached session ID works. Checking availability...');
+          console.log('Cached session ID works. Continue with job.');
           callback(sessionIDParam);
         } else {
           // Otherwise, fetch & validate a new session ID and execute call back if it's successsfal.
@@ -72,7 +77,7 @@ function _getVerifiedSessionID(
                     value: sessionIDParam.value
                   });
                   if (isValid) {
-                    console.log("New session ID works. Checking availability...");
+                    console.log("New session ID works. Continue with job.");
                     callback(sessionIDParam);
                   } else {
                     console.log("New session ID doesn't work. Terminate.");
@@ -101,11 +106,11 @@ function _validateSessionID(
   );
 }
 
-function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam, campsite: ICampsite): void {
+function _requestAvailabilityForUpcomingWeekendDates(sessionIDParam: HeaderParam, campsite: ICampsite): void {
   let upcomingWeekendDate = GetUpcomingTenWeekendDates();
   for (var i = 0; i < 1; i++) {
-    let cachedDate = upcomingWeekendDate[0];
-    console.log("Checking " + cachedDate.toString().substring(0, 15) + "...");
+    let cachedDate = upcomingWeekendDate[3];
+    console.log("Checking availability for " + cachedDate.toString().substring(0, 15) + "...");
     _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, campsite);
   }
 }

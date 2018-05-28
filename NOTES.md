@@ -32,7 +32,7 @@ There are a few cases where we performed the validation but still can't get the 
 
 1. Even with a perfectly validated `JSESSIONID`, recreation.gov may not give you availability for no reason. Try a few more times, it may succeed on the second or third time. `BatchRequestVerifier` is written specifically for this reason.
 2. If you repeatedly query the same campsite with new validated `JSESSIONID` (as I often do in my testing), the campsite page may only return invalid response. I think probably some kind of throttling on how often new `JSESSIONID` can be validated.
-3. As of this writing, when I test, with frequent new `JSESSIONID` validation and change of campsite ID, I can get valid reponses about 40% of the time. I believe caching proven good `JSESSIONID` will increase this rate.
+3. Validated `JSESSIONID` doesn't work on all campsites. But for one campsite, it works fairly consistently.
 
 # Random Bits
 
