@@ -1,16 +1,22 @@
 import request = require('request');
 import setCookie = require('set-cookie-parser');
+import {
+  EINVAL
+} from 'constants';
 
 const kCookieNameForSessionID = 'JSESSIONID';
+const kCookieNameForRauv = '_rauv_';
 
-export interface ISessionIDParam {
-  key: string,
-    value: string,
+export class HeaderParam {
+  constructor(private key: string, private value: string) {}
+  toString(): string {
+    return this.key + '=' + this.value;
+  }
 }
 
-export function FetchSessionID(callBack: (sessionIDParam: ISessionIDParam) => void): void {
+export function FetchSessionID(callBack: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void): void {
   let promise = new Promise(function (resolve: any, reject: any) {
-    var headers = {
+    let headers = {
       'Connection': 'keep-alive',
       'Pragma': 'no-cache',
       'Cache-Control': 'no-cache',
@@ -21,7 +27,7 @@ export function FetchSessionID(callBack: (sessionIDParam: ISessionIDParam) => vo
       'Accept-Language': 'en-US,en;q=0.9,zh-CN;q=0.8,zh-TW;q=0.7,zh;q=0.6'
     };
 
-    var options = {
+    let options = {
       url: 'https://www.recreation.gov/',
       headers: headers
     };
@@ -37,14 +43,19 @@ export function FetchSessionID(callBack: (sessionIDParam: ISessionIDParam) => vo
 
   promise.then((response: any) => {
     let cookies = setCookie.parse(response);
-
+    let sessionIDParam = undefined;
+    let rauvParam = undefined;
     // Multiple cookies will be returned. Look for the cookie that has the name `JSESSIONID`
     for (let index = 0; index < cookies.length; index++) {
-      if (cookies[0].name === kCookieNameForSessionID) {
-        callBack({
-          key: cookies[0].name,
-          value: cookies[0].value,
-        })
+      if (cookies[index].name === kCookieNameForSessionID) {
+        sessionIDParam = new HeaderParam(cookies[index].name, cookies[index].value);
+      } else if (cookies[index].name === kCookieNameForRauv) {
+        rauvParam = new HeaderParam(cookies[index].name, cookies[index].value);
+      }
+      if (sessionIDParam && rauvParam) {
+        console.log('SessionID fetched: ' + sessionIDParam.toString());
+        console.log('Rauv fetched: ' + rauvParam.toString());
+        callBack(sessionIDParam, rauvParam);
         return;
       }
     }

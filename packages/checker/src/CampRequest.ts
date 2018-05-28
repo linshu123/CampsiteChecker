@@ -11,41 +11,61 @@ import {
 } from './DateFactory'
 import {
   FetchSessionID,
-  ISessionIDParam
+  HeaderParam
 } from './SessionIDFetcher';
 import {
   GetUpcomingTenWeekendDates,
 } from './DateFactory.js';
+import {
+  BuildRequestPromise
+} from "./RequestFactory";
+import {
+  SessionIDValidator
+} from "./SessionIDValidator"
 
 export function SendRequest() {
-  FetchSessionID((sessionIDParam: ISessionIDParam) => {
-    _sendBatchRequestWithSessionID(sessionIDParam);
+  FetchSessionID((sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
+    _sendBatchRequestWithSessionID(sessionIDParam, rauvParam);
   });
 }
 
-function _sendBatchRequestWithSessionID(sessionIDParam: ISessionIDParam): void {
-
+function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam, rauvParam: HeaderParam): void {
+  let sessionIDValidator = new SessionIDValidator(sessionIDParam, rauvParam);
+  // sessionIDValidator.validateSessionID(
+  //   (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
   let interestedCampsites = GetInterestedCampsites();
   let upcomingWeekendDate = GetUpcomingTenWeekendDates();
-
   // TODO: it seems recreation.gov caches the response with a cookie. 
   // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
   // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
-  // for (var i = 0; i < 1; i++) {
-  let cachedDate = upcomingWeekendDate[0];
-  let cachedCampsite = interestedCampsites[4];
-  // Maybe use a timer to spread out traffic (doesn't have any effect for now)
-  // setTimeout(function () {
-  console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
-  _sendRequest(sessionIDParam, cachedDate, 1, cachedCampsite);
-  // }, 5000 * i);
-  // }
+  for (var i = 0; i < 3; i++) {
+    let cachedDate = upcomingWeekendDate[0];
+    let cachedCampsite = interestedCampsites[3];
+    // Maybe use a timer to spread out traffic (doesn't have any effect for now)
+    // setTimeout(function () { [code] }, 5000 * i);
+    console.log('Wait for a few seconds...');
+    setTimeout(function () {
+      console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
+      _sendRequest(sessionIDParam, cachedDate, 1, cachedCampsite);
+    }, 30 * i);
+  }
+  // });
 }
 
-function _sendRequest(sessionIDParam: ISessionIDParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
-  let cookie = sessionIDParam.key + '=' + sessionIDParam.value;
-  console.log('Fetching with cookie: ' + cookie);
-  var headers = {
+function _sendRequest(sessionIDParam: HeaderParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
+  let request = _getRequestPromise(sessionIDParam, arrivalDate, stayLength, campsite);
+  request.then((body: any) => {
+    _writeReponseToFile("./temp/response.html", body);
+    _printAvailableSiteNumberFromHTML(body);
+  });
+}
+
+function _getRequestPromise(
+  sessionIDParam: HeaderParam,
+  arrivalDate: Date,
+  stayLength: number,
+  campsite: ICampsite) {
+  let headers = {
     'Connection': 'keep-alive',
     'Pragma': 'no-cache',
     'Cache-Control': 'no-cache',
@@ -55,7 +75,7 @@ function _sendRequest(sessionIDParam: ISessionIDParam, arrivalDate: Date, stayLe
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.139 Safari/537.36',
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
     'Referer': 'https://www.recreation.gov/camping/lower-pines/r/campgroundDetails.do?contractCode=NRSO&parkId=70928',
-    'Cookie': cookie,
+    'Cookie': sessionIDParam.toString(),
   };
 
   let departureDate = AddDays(arrivalDate, stayLength);
@@ -75,14 +95,12 @@ function _sendRequest(sessionIDParam: ISessionIDParam, arrivalDate: Date, stayLe
 
   let dataString = querystring.stringify(dataParams);
 
-  let options = {
+  return BuildRequestPromise({
     url: 'https://www.recreation.gov/campsiteSearch.do',
     method: 'POST',
     headers: headers,
-    body: dataString
-  };
-
-  request(options, callback);
+    dataString: dataString
+  });
 }
 
 // Convert date into format of 'Sat+Jul+21+2018'
@@ -92,15 +110,6 @@ function _getDateShortString(date: Date): string {
 
 function _writeReponseToFile(fileName: string, content: string) {
   fs.writeFile(fileName, content, function (err) {});
-}
-
-function callback(error: string, response: any, body: string) {
-  if (!error && response.statusCode == 200) {
-    _writeReponseToFile("./temp/response.html", body);
-    _printAvailableSiteNumberFromHTML(body);
-  } else if (error) {
-    console.log(error);
-  }
 }
 
 function _printAvailableSiteNumberFromHTML(htmlBody: string) {

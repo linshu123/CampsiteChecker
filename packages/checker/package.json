@@ -11,6 +11,7 @@
   "dependencies": {
     "@types/cheerio": "^0.22.7",
     "@types/request": "^2.47.0",
+    "async-request": "^1.2.0",
     "cheerio": "^1.0.0-rc.2",
     "request": "2.85.0",
     "set-cookie-parser": "^2.1.2"
