@@ -15,7 +15,8 @@ export class SessionIDValidator {
     callBack: (
       validatedSessionID: HeaderParam,
       validatedRauv: HeaderParam
-    ) => void
+    ) => void,
+    waitTimeBetweenRequests: number,
   ) {
 
     let request1 = this._getRequestPromiseForParkSearchFirstRequest();
@@ -24,19 +25,27 @@ export class SessionIDValidator {
     let request4 = this._getRequestPromiseForCampgroundSearchSecondRequest();
     let request5 = this._getRequestPromiseForDateSearchRequest();
 
-    request1.then((response: any) => {
+    request1.then((body: any) => {
       console.log("request1 succeeded!");
-      request2.then((response: any) => {
-        console.log("request2 succeeded!");
-        request3.then((response: any) => {
-          console.log("request3 succeeded!");
-          request4.then((response: any) => {
-            console.log("request4 succeeded!");
-            request5.then((response: any) => {
-              console.log("request5 succeeded! Validation completed!");
-              console.log("Validated sessionID: " + this.sessionID.toString());
-              console.log("Validated rauv: " + this.rauv.toString());
-              callBack(this.sessionID, this.rauv);
+      new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+        request2.then((body: any) => {
+          console.log("request2 succeeded!");
+          new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+            request3.then((body: any) => {
+              console.log("request3 succeeded!");
+              new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+                request4.then((body: any) => {
+                  console.log("request4 succeeded!");
+                  new Promise(resolve => setTimeout(resolve, waitTimeBetweenRequests)).then(() => {
+                    request5.then((body: any) => {
+                      console.log("request5 succeeded! Validation completed!");
+                      console.log("Validated sessionID: " + this.sessionID.toString());
+                      console.log("Validated rauv: " + this.rauv.toString());
+                      callBack(this.sessionID, this.rauv);
+                    });
+                  });
+                });
+              });
             });
           });
         });

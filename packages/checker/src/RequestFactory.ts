@@ -7,7 +7,7 @@ export interface RequestOptions {
     method ? : string,
 };
 
-// Returns a promise with the request
+// Returns a promise with the request. Reponse body is returned to resolve.
 export function BuildRequestPromise(requestOptions: RequestOptions) {
   let promise = new Promise(function (resolve: (body: any) => void, reject: (error: any) => void) {
     var options = {

@@ -5,10 +5,10 @@ import querystring = require('querystring');
 import {
   ICampsite,
   GetInterestedCampsites,
-} from './CampsiteFactory'
+} from './CampsiteFactory';
 import {
   AddDays
-} from './DateFactory'
+} from './DateFactory';
 import {
   FetchSessionID,
   HeaderParam
@@ -21,7 +21,10 @@ import {
 } from "./RequestFactory";
 import {
   SessionIDValidator
-} from "./SessionIDValidator"
+} from "./SessionIDValidator";
+import {
+  BatchRequestVerifier
+} from './BatchRequestVerifier';
 
 export function SendRequest() {
   FetchSessionID((sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
@@ -31,36 +34,43 @@ export function SendRequest() {
 
 function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam, rauvParam: HeaderParam): void {
   let sessionIDValidator = new SessionIDValidator(sessionIDParam, rauvParam);
-  // sessionIDValidator.validateSessionID(
-  //   (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
-  let interestedCampsites = GetInterestedCampsites();
-  let upcomingWeekendDate = GetUpcomingTenWeekendDates();
-  // TODO: it seems recreation.gov caches the response with a cookie. 
-  // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
-  // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
-  for (var i = 0; i < 3; i++) {
-    let cachedDate = upcomingWeekendDate[0];
-    let cachedCampsite = interestedCampsites[3];
-    // Maybe use a timer to spread out traffic (doesn't have any effect for now)
-    // setTimeout(function () { [code] }, 5000 * i);
-    console.log('Wait for a few seconds...');
-    setTimeout(function () {
-      console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
-      _sendRequest(sessionIDParam, cachedDate, 1, cachedCampsite);
-    }, 30 * i);
-  }
-  // });
+  sessionIDValidator.validateSessionID(
+    (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
+      let interestedCampsites = GetInterestedCampsites();
+      let upcomingWeekendDate = GetUpcomingTenWeekendDates();
+      // TODO: it seems recreation.gov caches the response with a cookie. 
+      // If I send requests for 5 different campsites for the same date at the same time, only one will respond with valid matchSummary.
+      // If I send requests for 5 different dates for the same campsite at the same time, they'll all return with the same availability numbers.
+      for (var i = 0; i < 1; i++) {
+        let cachedDate = upcomingWeekendDate[0];
+        let cachedCampsite = interestedCampsites[0];
+        // Maybe use a timer to spread out traffic (doesn't have any effect for now)
+        // setTimeout(function () { [code] }, 5000 * i);
+        console.log('Wait for a few seconds...');
+        setTimeout(function () {
+          console.log('Checking ' + cachedDate.toString().substring(0, 15) + '...');
+          _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, cachedCampsite);
+        }, 30 * i);
+      }
+    }, 0);
 }
 
-function _sendRequest(sessionIDParam: HeaderParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
-  let request = _getRequestPromise(sessionIDParam, arrivalDate, stayLength, campsite);
-  request.then((body: any) => {
-    _writeReponseToFile("./temp/response.html", body);
-    _printAvailableSiteNumberFromHTML(body);
-  });
+function _getAvailabilityOfCampsite(sessionIDParam: HeaderParam, arrivalDate: Date, stayLength: number, campsite: ICampsite) {
+  let batchRequestVerifier = new BatchRequestVerifier(
+    () => {
+      return _getAvailabilityRequestPromise(sessionIDParam, arrivalDate, stayLength, campsite);
+    },
+    5,
+    _isAvailabilityResponseValid,
+    (didSucceed: boolean, body: string) => {
+      _printAvailableSiteNumberFromHTML(body);
+    }
+  );
+
+  batchRequestVerifier.startBatchRequest();
 }
 
-function _getRequestPromise(
+function _getAvailabilityRequestPromise(
   sessionIDParam: HeaderParam,
   arrivalDate: Date,
   stayLength: number,
@@ -77,6 +87,7 @@ function _getRequestPromise(
     'Referer': 'https://www.recreation.gov/camping/lower-pines/r/campgroundDetails.do?contractCode=NRSO&parkId=70928',
     'Cookie': sessionIDParam.toString(),
   };
+  // console.log('Using overridden cookie');
 
   let departureDate = AddDays(arrivalDate, stayLength);
   let arrivalDateShortString = _getDateShortString(arrivalDate);
@@ -121,5 +132,15 @@ function _printAvailableSiteNumberFromHTML(htmlBody: string) {
     console.log(campsiteName + " - " + date + ": " + summary);
   } else {
     console.log(campsiteName + ": Can't find result. Cookie may have expired.");
+  }
+}
+
+function _isAvailabilityResponseValid(htmlBody: string): boolean {
+  let $ = cheerio.load(htmlBody);
+  let summary = $('.matchSummary').text();
+  if (summary.length > 0) {
+    return summary.includes('site(s) available');
+  } else {
+    return false;
   }
 }
