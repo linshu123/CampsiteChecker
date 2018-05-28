@@ -26,3 +26,10 @@ export function GetInterestedCampsites(): Array < ICampsite > {
     },
   ];
 }
+
+export function GetTestCampsite(): ICampsite {
+  return {
+    name: 'LOWER PINES',
+    id: '70928',
+  };
+}

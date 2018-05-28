@@ -1,6 +1,6 @@
 // Returns an Date array of upcoming 10 Saturdays.
 export function GetUpcomingTenWeekendDates(): Array < Date > {
-  let upcomingWeekendDate = _getUpcomingWeekendDate();
+  let upcomingWeekendDate = GetUpcomingWeekendDate();
   let tenUpcomingWeekends = [];
   for (var i = 0; i < 10; i++) {
     tenUpcomingWeekends.push(AddDays(upcomingWeekendDate, i * 7));
@@ -8,7 +8,7 @@ export function GetUpcomingTenWeekendDates(): Array < Date > {
   return tenUpcomingWeekends;
 }
 
-function _getUpcomingWeekendDate(): Date {
+export function GetUpcomingWeekendDate(): Date {
   let now = new Date();
   let day = now.getDay();
   let isWeekendNow = 6 > day;
