@@ -24,12 +24,13 @@ export function GetInterestedCampsites(): Array < ICampsite > {
       name: 'WAWONA',
       id: '70924',
     },
+    {
+      name: 'MORAINE PARK CAMPGROUND',
+      id: '70943',
+    },
+    {
+      name: 'GLACIER BASIN CAMPGROUND',
+      id: '70942',
+    }
   ];
-}
-
-export function GetTestCampsite(): ICampsite {
-  return {
-    name: 'NORTH PINES',
-    id: '70927',
-  };
 }

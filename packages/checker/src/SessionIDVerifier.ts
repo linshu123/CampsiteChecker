@@ -4,7 +4,6 @@ import {
 } from "./ResponseParser";
 import {
   ICampsite,
-  GetTestCampsite
 } from "./CampsiteFactory";
 import {
   HeaderParam
@@ -29,7 +28,6 @@ export function SessionIDIsValid(
   callBack: (isValid: boolean, sessionIDParam: HeaderParam) => void
 ) {
   let upcomingWeekendDate = GetUpcomingWeekendDate();
-  let interestedCampsites = GetTestCampsite();
   let batchRequestVerifier = new BatchRequestVerifier(
     () => {
       return BuildAvailabilityRequestPromise(

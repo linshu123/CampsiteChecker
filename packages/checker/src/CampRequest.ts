@@ -33,7 +33,9 @@ import {
 const kFileNameForCachedSessionID = "./cache/valid_session_id.json";
 
 export function SendRequest() {
-  let interestedCampsite = GetInterestedCampsites()[4];
+  let timeStamp = new Date().toLocaleTimeString();
+  console.log("******* Start job ******* " + timeStamp);
+  let interestedCampsite = GetInterestedCampsites()[5];
   _getVerifiedSessionID(interestedCampsite, (sessionIDParam: HeaderParam) => {
     _sendBatchRequestWithSessionID(sessionIDParam, interestedCampsite);
   });
@@ -43,15 +45,16 @@ function _getVerifiedSessionID(
   campsite: ICampsite,
   callBack: (sessionIDParam: HeaderParam) => void
 ) {
-  console.log('Loading cached session ID...')
   loadJsonFile(kFileNameForCachedSessionID).then(json => {
     let sessionIDParam = new HeaderParam(json.name, json.value);
+    console.log('Loaded session ID: ' + sessionIDParam.toString());
     SessionIDIsValid(
       sessionIDParam,
       campsite,
       (isValid: boolean, sessionIDParam: HeaderParam) => {
         if (isValid) {
           // If session ID is valid, execute call back.
+          console.log('Cached session ID works. Check availability...');
           callBack(sessionIDParam);
         } else {
           // Otherwise, fetch & validate a new session ID and execute call back if it's successsfal.
@@ -69,6 +72,7 @@ function _getVerifiedSessionID(
                       name: sessionIDParam.key,
                       value: sessionIDParam.value
                     });
+                    console.log("Checking availability...");
                     callBack(sessionIDParam);
                   } else {
                     console.log("New session ID doesn't work. Terminate.");
