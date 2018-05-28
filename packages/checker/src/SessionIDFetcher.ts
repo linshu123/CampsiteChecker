@@ -8,7 +8,7 @@ const kCookieNameForSessionID = 'JSESSIONID';
 const kCookieNameForRauv = '_rauv_';
 
 export class HeaderParam {
-  constructor(private key: string, private value: string) {}
+  constructor(public key: string, public value: string) {}
   toString(): string {
     return this.key + '=' + this.value;
   }

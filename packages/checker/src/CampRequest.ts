@@ -24,38 +24,84 @@ import {
 import {
   BuildAvailabilityRequestPromise
 } from "./AvailabilityRequestBuilder";
+import loadJsonFile from "load-json-file";
+import writeJsonFile from "write-json-file";
+import {
+  SessionIDIsValid
+} from "./SessionIDVerifier";
+
+const kFileNameForCachedSessionID = "./cache/valid_session_id.json";
 
 export function SendRequest() {
-  FetchSessionID((sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
-    _sendBatchRequestWithSessionID(sessionIDParam, rauvParam);
+  _getVerifiedSessionID((sessionIDParam: HeaderParam) => {
+    _sendBatchRequestWithSessionID(sessionIDParam);
   });
 }
 
-function _sendBatchRequestWithSessionID(
+function _getVerifiedSessionID(
+  callBack: (sessionIDParam: HeaderParam) => void
+) {
+  console.log('Loading cached session ID...')
+  loadJsonFile(kFileNameForCachedSessionID).then(json => {
+    let sessionIDParam = new HeaderParam(json.name, json.value);
+    SessionIDIsValid(
+      sessionIDParam,
+      (isValid: boolean, sessionIDParam: HeaderParam) => {
+        if (isValid) {
+          // If session ID is valid, execute call back.
+          callBack(sessionIDParam);
+        } else {
+          // Otherwise, fetch & validate a new session ID and execute call back if it's successsfal.
+          console.log("Cached session ID doesn't work, fetch and validate a new session ID");
+          FetchSessionID((sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
+            _validateSessionID(sessionIDParam, rauvParam, (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
+              SessionIDIsValid(
+                sessionIDParam,
+                (isValid: boolean, sessionIDParam: HeaderParam) => {
+                  // If session ID is valid, save to file and continue with request using that session ID.
+                  if (isValid) {
+                    console.log("New session ID works. Writing to cached session ID file.");
+                    writeJsonFile(kFileNameForCachedSessionID, {
+                      name: sessionIDParam.key,
+                      value: sessionIDParam.value
+                    });
+                    callBack(sessionIDParam);
+                  } else {
+                    console.log("New session ID doesn't work. Terminate.");
+                  }
+                }
+              );
+            });
+          });
+        }
+      }
+    );
+  });
+}
+
+function _validateSessionID(
   sessionIDParam: HeaderParam,
-  rauvParam: HeaderParam
-): void {
+  rauvParam: HeaderParam,
+  callBack: (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => void
+) {
   let sessionIDValidator = new SessionIDValidator(sessionIDParam, rauvParam);
   sessionIDValidator.validateSessionID(
     (sessionIDParam: HeaderParam, rauvParam: HeaderParam) => {
-      let interestedCampsites = GetInterestedCampsites();
-      let upcomingWeekendDate = GetUpcomingTenWeekendDates();
-      for (var i = 0; i < 1; i++) {
-        let cachedDate = upcomingWeekendDate[0];
-        let cachedCampsite = interestedCampsites[1];
-        console.log(
-          "Checking " + cachedDate.toString().substring(0, 15) + "..."
-        );
-        _getAvailabilityOfCampsite(
-          sessionIDParam,
-          cachedDate,
-          1,
-          cachedCampsite
-        );
-      }
+      callBack(sessionIDParam, rauvParam);
     },
     3000
   );
+}
+
+function _sendBatchRequestWithSessionID(sessionIDParam: HeaderParam): void {
+  let interestedCampsites = GetInterestedCampsites();
+  let upcomingWeekendDate = GetUpcomingTenWeekendDates();
+  for (var i = 0; i < 1; i++) {
+    let cachedDate = upcomingWeekendDate[0];
+    let cachedCampsite = interestedCampsites[1];
+    console.log("Checking " + cachedDate.toString().substring(0, 15) + "...");
+    _getAvailabilityOfCampsite(sessionIDParam, cachedDate, 1, cachedCampsite);
+  }
 }
 
 function _getAvailabilityOfCampsite(

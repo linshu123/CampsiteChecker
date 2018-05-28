@@ -23,7 +23,10 @@ import {
   Given a session ID, verify it's validated or not, by sending an availability 
   request and check the response.
 */
-export function VerifySessionID(sessionIDParam: HeaderParam) {
+export function SessionIDIsValid(
+  sessionIDParam: HeaderParam,
+  callBack: (isValid: boolean, sessionIDParam: HeaderParam) => void
+) {
   let upcomingWeekendDate = GetUpcomingWeekendDate();
   let interestedCampsites = GetTestCampsite();
   let batchRequestVerifier = new BatchRequestVerifier(
@@ -38,7 +41,7 @@ export function VerifySessionID(sessionIDParam: HeaderParam) {
     3, // Number of attempts
     IsAvailabilityResponseValid,
     (didSucceed: boolean, body: string) => {
-      PrintAvailableSiteNumberFromHTML(body);
+      callBack(didSucceed, sessionIDParam);
     }
   );
 
